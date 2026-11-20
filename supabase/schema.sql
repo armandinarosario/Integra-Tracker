@@ -49,6 +49,13 @@ create table if not exists public.assessments (
   created_at timestamptz not null default now()
 );
 
+-- Os projetos Supabase recentes não dão acesso automático da API às tabelas novas.
+-- Só o papel "authenticated" (utilizador com sessão iniciada) recebe acesso;
+-- as políticas RLS abaixo limitam esse acesso às linhas do próprio utilizador.
+grant usage on schema public to authenticated;
+grant select, insert, update, delete on public.plans, public.block_logs, public.deliverables, public.assessments to authenticated;
+revoke all on public.plans, public.block_logs, public.deliverables, public.assessments from anon;
+
 create index if not exists plans_user_idx on public.plans (user_id, archived);
 create index if not exists assessments_plan_idx on public.assessments (plan_id);
 

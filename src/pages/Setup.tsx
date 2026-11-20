@@ -16,6 +16,7 @@ export default function Setup({ onCancel }: { onCancel?: () => void }) {
   const [template, setTemplate] = useState<PlanTemplate | null>(null);
   const [startDate, setStartDate] = useState(todayISO());
   const [errors, setErrors] = useState<string[]>([]);
+  const [startError, setStartError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -59,7 +60,7 @@ export default function Setup({ onCancel }: { onCancel?: () => void }) {
       await reload();
       go('/');
     } catch (e) {
-      setErrors([(e as Error).message]);
+      setStartError(`Não foi possível iniciar o plano: ${(e as Error).message}`);
       setBusy(false);
     }
   }
@@ -135,6 +136,7 @@ export default function Setup({ onCancel }: { onCancel?: () => void }) {
           )}
         </div>
 
+        {startError && <div className="notice error">{startError}</div>}
         <div className="row">
           <button className="btn primary" disabled={!template || !startDate || busy} onClick={start}>
             {busy ? 'A preparar…' : 'Iniciar o plano'}
