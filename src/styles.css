@@ -449,3 +449,20 @@ input::placeholder, textarea::placeholder { color: color-mix(in srgb, var(--ink-
 .card-brand .pill.doing .dot { background: var(--salvia); border-color: var(--salvia); }
 @media (max-width: 760px) { .week-summary { grid-template-columns: 1fr; } }
 @media (max-width: 599px) { .card-head .btn.primary { width: 100%; } }
+
+/* Registo concluído e bloqueado */
+.block-card.locked { background: color-mix(in srgb, var(--surface-raised) 70%, var(--surface)); }
+.block-card.locked input:disabled,
+.block-card.locked textarea:disabled { opacity: 1; color: var(--ink); background: transparent; border-style: dashed; cursor: default; -webkit-text-fill-color: var(--ink); }
+.locked-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: 10px var(--space-4); border-radius: var(--radius-md); background: var(--surface-brand); color: var(--on-brand); }
+.locked-label { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; }
+.locked-label svg { color: var(--ambar); }
+.btn.ghost { background: transparent; color: var(--on-brand); border-color: color-mix(in srgb, var(--on-brand) 40%, transparent); }
+.btn.ghost:hover { border-color: var(--on-brand); }
+.seg button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Janela de confirmação */
+dialog.confirm { border: 1px solid var(--hairline); border-radius: var(--radius-lg); background: var(--surface-raised); color: var(--ink); padding: var(--space-6); width: min(440px, calc(100vw - 32px)); box-shadow: 0 12px 32px rgba(17, 20, 24, 0.18); }
+dialog.confirm::backdrop { background: rgba(17, 20, 24, 0.55); }
+dialog.confirm h2 { margin: 6px 0 8px; }
+dialog.confirm p { margin: 0 0 20px; line-height: 22px; }

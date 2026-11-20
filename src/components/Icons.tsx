@@ -79,3 +79,10 @@ export const IconExternal = () => (
     <path d="M18 14v4.5a1 1 0 0 1-1 1H5.5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1H10" />
   </svg>
 );
+
+export const IconLock = () => (
+  <svg {...base} width={16} height={16}>
+    <rect x="5" y="10.5" width="14" height="10" rx="2" />
+    <path d="M8 10.5V7.5a4 4 0 0 1 8 0v3" />
+  </svg>
+);

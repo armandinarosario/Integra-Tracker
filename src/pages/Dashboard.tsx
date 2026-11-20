@@ -103,7 +103,7 @@ export default function Dashboard() {
                 <div key={b.key} className="week-summary-row">
                   <span>
                     {b.name}
-                    <span className="muted small"> · {fmt(log?.hours ?? 0)} de {b.plannedHours} h</span>
+                    <span className="muted small"> · {b.plannedHours} h</span>
                   </span>
                   <StatusPill status={log?.status ?? 'todo'} />
                 </div>

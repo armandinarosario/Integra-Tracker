@@ -19,8 +19,9 @@ export function findDeliverable(ds: Deliverable[], week: number): Deliverable | 
   return ds.find((d) => d.week === week);
 }
 
+/** Horas de uma semana: cada bloco concluído conta com as horas previstas. */
 export function weekHours(logs: BlockLog[], week: number): number {
-  return logs.filter((l) => l.week === week).reduce((s, l) => s + (l.hours || 0), 0);
+  return logs.filter((l) => l.week === week && l.status === 'done').reduce((s, l) => s + (l.hours || 0), 0);
 }
 
 /**
@@ -89,7 +90,7 @@ export function summarize(data: PlanData, today: string): Summary {
     deliverablesDone,
     deliverablesTotal: totalWeeks,
     percentComplete: total === 0 ? 0 : Math.round((done / total) * 100),
-    hoursDone: blockLogs.reduce((s, l) => s + (l.hours || 0), 0),
+    hoursDone: blockLogs.filter((l) => l.status === 'done').reduce((s, l) => s + (l.hours || 0), 0),
     hoursPlannedToDate: Math.max(0, Math.min(totalWeeks, week)) * t.weeklyHours,
     hoursPlannedTotal: totalWeeks * t.weeklyHours,
     lateWeeks,

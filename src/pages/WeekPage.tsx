@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { WeekStatePill } from '../components/StatusPill';
 import { PageHeader } from '../components/PageHeader';
-import { IconArrowLeft, IconArrowRight, IconExternal } from '../components/Icons';
+import { IconArrowLeft, IconArrowRight, IconExternal, IconLock } from '../components/Icons';
 import { findDeliverable, findLog, weekHours, weekState } from '../lib/progress';
 import { go } from '../lib/router';
 import { currentWeek, formatShort, todayISO, weekEndDate, weekStartDate } from '../lib/schedule';
@@ -46,20 +46,118 @@ function useAutosave(save: () => void, deps: unknown[]) {
   return pending;
 }
 
-function parseHours(s: string): number {
-  const n = Number(s.replace(',', '.'));
-  return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) / 100 : 0;
+/** Janela de confirmação com o estilo da app. */
+function ConfirmDialog({
+  open,
+  title,
+  body,
+  confirmLabel,
+  onConfirm,
+  onCancel,
+}: {
+  open: boolean;
+  title: string;
+  body: string;
+  confirmLabel: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  const ref = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const d = ref.current;
+    if (!d) return;
+    if (open && !d.open) d.showModal();
+    if (!open && d.open) d.close();
+  }, [open]);
+  return (
+    <dialog ref={ref} className="confirm" onCancel={(e) => (e.preventDefault(), onCancel())}>
+      <span className="overline">Confirmar</span>
+      <h2>{title}</h2>
+      <p className="muted">{body}</p>
+      <div className="row" style={{ justifyContent: 'flex-end' }}>
+        <button className="btn" onClick={onCancel}>
+          Cancelar
+        </button>
+        <button className="btn primary" onClick={onConfirm} autoFocus>
+          {confirmLabel}
+        </button>
+      </div>
+    </dialog>
+  );
 }
 
-function StatusSeg({ value, onChange }: { value: Status; onChange: (s: Status) => void }) {
+/**
+ * Estado com confirmação: "Feito" só fica disponível com evidências e pede
+ * confirmação; depois o registo fica bloqueado até ser reaberto.
+ */
+function StatusControl({
+  value,
+  onChange,
+  canFinish,
+  missing,
+  what,
+}: {
+  value: Status;
+  onChange: (s: Status) => void;
+  canFinish: boolean;
+  missing: string;
+  what: string;
+}) {
+  const [ask, setAsk] = useState<'done' | 'reopen' | null>(null);
+  const done = value === 'done';
   return (
-    <div className="seg fill" role="group" aria-label="Estado">
-      {STATUSES.map((s) => (
-        <button key={s} className={value === s ? 'on' : ''} onClick={() => onChange(s)} aria-pressed={value === s}>
-          {STATUS_LABEL[s]}
-        </button>
-      ))}
-    </div>
+    <>
+      {done ? (
+        <div className="locked-bar">
+          <span className="locked-label">
+            <IconLock /> Concluído e bloqueado
+          </span>
+          <button className="btn small ghost" onClick={() => setAsk('reopen')}>
+            Reabrir
+          </button>
+        </div>
+      ) : (
+        <div className="stack-sm" style={{ gap: 6 }}>
+          <div className="seg fill" role="group" aria-label="Estado">
+            {STATUSES.map((s) => (
+              <button
+                key={s}
+                className={value === s ? 'on' : ''}
+                aria-pressed={value === s}
+                disabled={s === 'done' && !canFinish}
+                title={s === 'done' && !canFinish ? missing : undefined}
+                onClick={() => (s === 'done' ? setAsk('done') : onChange(s))}
+              >
+                {STATUS_LABEL[s]}
+              </button>
+            ))}
+          </div>
+          {!canFinish && <span className="small muted">{missing}</span>}
+        </div>
+      )}
+      <ConfirmDialog
+        open={ask === 'done'}
+        title={`Concluir ${what}?`}
+        body="Confirme que a atividade está concluída e que as evidências estão registadas. Depois de confirmar, o registo fica bloqueado."
+        confirmLabel="Sim, está concluída"
+        onCancel={() => setAsk(null)}
+        onConfirm={() => {
+          setAsk(null);
+          onChange('done');
+        }}
+      />
+      <ConfirmDialog
+        open={ask === 'reopen'}
+        title={`Reabrir ${what}?`}
+        body="O registo volta a ficar editável, com o estado Em curso, e deixa de contar como concluído até o voltar a fechar."
+        confirmLabel="Reabrir"
+        onCancel={() => setAsk(null)}
+        onConfirm={() => {
+          setAsk(null);
+          onChange('doing');
+        }}
+      />
+    </>
   );
 }
 
@@ -67,24 +165,35 @@ function BlockEditor({ planId, week, block }: { planId: string; week: number; bl
   const { data, saveBlockLog } = usePlan();
   const existing = findLog(data!.blockLogs, week, block.key);
   const [status, setStatus] = useState<Status>(existing?.status ?? 'todo');
-  const [hours, setHours] = useState(existing ? String(existing.hours).replace('.', ',') : '');
   const [notes, setNotes] = useState(existing?.notes ?? '');
   const [principles, setPrinciples] = useState<string[]>(existing?.principles?.length ? existing.principles : ['', '', '']);
+  const locked = status === 'done';
 
   const build = (): BlockLog => ({
     planId,
     week,
     blockKey: block.key,
     status,
-    hours: parseHours(hours),
+    // As horas não se registam: um bloco concluído conta com as horas previstas.
+    hours: status === 'done' ? block.plannedHours : 0,
     notes,
     principles: block.capturePrinciples ? principles : [],
     updatedAt: nowISO(),
   });
-  const pending = useAutosave(() => saveBlockLog(build()), [status, hours, notes, principles.join('\u0001')]);
+  const pending = useAutosave(() => saveBlockLog(build()), [status, notes, principles.join('\u0001')]);
+
+  const missingPrinciples = block.capturePrinciples ? principles.filter((p) => !p.trim()).length : 0;
+  const hasNotes = notes.trim().length > 0;
+  const canFinish = hasNotes && missingPrinciples === 0;
+  const missing = [
+    block.capturePrinciples && missingPrinciples > 0 ? 'os três princípios' : null,
+    !hasNotes ? 'as evidências' : null,
+  ]
+    .filter(Boolean)
+    .join(' e ');
 
   return (
-    <div className="block-card">
+    <div className={`block-card${locked ? ' locked' : ''}`}>
       <div className="block-head">
         <div className="stack-sm" style={{ gap: 4 }}>
           <span className="overline">{block.plannedHours} h previstas</span>
@@ -93,25 +202,13 @@ function BlockEditor({ planId, week, block }: { planId: string; week: number; bl
         </div>
         {pending && <span className="saving">A guardar…</span>}
       </div>
-      <div className="block-controls">
-        <StatusSeg
-          value={status}
-          onChange={(s) => {
-            setStatus(s);
-            if (s === 'done' && !hours) setHours(String(block.plannedHours));
-          }}
-        />
-        <label className="inline-field">
-          Horas feitas
-          <input
-            inputMode="decimal"
-            value={hours}
-            placeholder="0"
-            onChange={(e) => setHours(e.target.value)}
-            aria-label={`Horas feitas em ${block.name}`}
-          />
-        </label>
-      </div>
+      <StatusControl
+        value={status}
+        onChange={setStatus}
+        canFinish={canFinish}
+        missing={`Para marcar como Feito, registe ${missing}.`}
+        what={`o bloco ${block.name}`}
+      />
       {block.capturePrinciples && (
         <div className="stack-sm" style={{ gap: 8 }}>
           <span className="small muted" style={{ fontWeight: 600 }}>
@@ -121,6 +218,7 @@ function BlockEditor({ planId, week, block }: { planId: string; week: number; bl
             <input
               key={i}
               value={p}
+              disabled={locked}
               placeholder={`Princípio ${i + 1}`}
               aria-label={`Princípio ${i + 1}`}
               onChange={(e) => setPrinciples(principles.map((x, j) => (j === i ? e.target.value : x)))}
@@ -129,8 +227,13 @@ function BlockEditor({ planId, week, block }: { planId: string; week: number; bl
         </div>
       )}
       <label className="field">
-        Notas ou conteúdo concluído
-        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} />
+        Evidências: o que fez e o que concluiu
+        <textarea
+          value={notes}
+          disabled={locked}
+          placeholder="Por exemplo: li o capítulo 2, preparei a nota para o caso X, ligação para o rascunho…"
+          onChange={(e) => setNotes(e.target.value)}
+        />
       </label>
     </div>
   );
@@ -143,6 +246,7 @@ function DeliverableEditor({ planId, week, description }: { planId: string; week
   const [link, setLink] = useState(existing?.link ?? '');
   const [deliveredOn, setDeliveredOn] = useState(existing?.deliveredOn ?? '');
   const [notes, setNotes] = useState(existing?.notes ?? '');
+  const locked = status === 'done';
 
   const build = (): Deliverable => ({
     planId,
@@ -157,7 +261,7 @@ function DeliverableEditor({ planId, week, description }: { planId: string; week
   const isUrl = /^https?:\/\//i.test(link.trim());
 
   return (
-    <div className="block-card deliverable">
+    <div className={`block-card deliverable${locked ? ' locked' : ''}`}>
       <div className="block-head">
         <div className="stack-sm" style={{ gap: 4 }}>
           <span className="overline">Entregável da semana</span>
@@ -165,22 +269,24 @@ function DeliverableEditor({ planId, week, description }: { planId: string; week
         </div>
         {pending && <span className="saving">A guardar…</span>}
       </div>
-      <div className="block-controls">
-        <StatusSeg
-          value={status}
-          onChange={(s) => {
-            setStatus(s);
-            if (s === 'done' && !deliveredOn) setDeliveredOn(todayISO());
-          }}
-        />
-        <label className="inline-field">
-          Entregue em
-          <input type="date" value={deliveredOn} onChange={(e) => setDeliveredOn(e.target.value)} />
-        </label>
-      </div>
+      <StatusControl
+        value={status}
+        onChange={(s) => {
+          setStatus(s);
+          if (s === 'done' && !deliveredOn) setDeliveredOn(todayISO());
+        }}
+        canFinish={link.trim().length > 0}
+        missing="Para marcar como Feito, registe a ligação para o entregável."
+        what="o entregável"
+      />
       <label className="field">
-        Ligação para o ficheiro (OneDrive, SharePoint ou caminho na pasta)
-        <input value={link} placeholder="https://… ou D:\Integra-Tracker\…" onChange={(e) => setLink(e.target.value)} />
+        Evidência: ligação para o ficheiro (OneDrive, SharePoint ou caminho na pasta)
+        <input
+          value={link}
+          disabled={locked}
+          placeholder="https://… ou D:\Integra-Tracker\…"
+          onChange={(e) => setLink(e.target.value)}
+        />
       </label>
       {link && (
         <span className="small">
@@ -193,9 +299,13 @@ function DeliverableEditor({ planId, week, description }: { planId: string; week
           )}
         </span>
       )}
+      <label className="inline-field">
+        Entregue em
+        <input type="date" value={deliveredOn} disabled={locked} onChange={(e) => setDeliveredOn(e.target.value)} />
+      </label>
       <label className="field">
         Notas
-        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} />
+        <textarea value={notes} disabled={locked} onChange={(e) => setNotes(e.target.value)} />
       </label>
     </div>
   );

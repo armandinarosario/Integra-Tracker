@@ -98,6 +98,8 @@ describe('progresso', () => {
     expect(s.blocksTotal).toBe(56);
     expect(s.percentComplete).toBe(Math.round((2 / 70) * 100));
     expect(weekState(d, 1, '2026-12-09')).toBe('done');
+    d.blockLogs.push({ planId: 'p1', week: 2, blockKey: 'b', status: 'doing', hours: 3, notes: '', principles: [], updatedAt: '' });
+    expect(summarize(d, '2026-12-09').hoursDone).toBe(2.5);
     expect(weekState(d, 2, '2026-12-09')).toBe('late');
     expect(weekState(d, 3, '2026-12-09')).toBe('current');
     expect(weekState(d, 4, '2026-12-09')).toBe('future');
