@@ -3,7 +3,10 @@ import { downloadFile } from '../lib/files';
 import { buildIcs } from '../lib/ics';
 import { formatDate, planEndDate, WEEKDAY_NAMES } from '../lib/schedule';
 import type { WeeklySlot } from '../lib/types';
-import { store } from '../store';
+import { store, supabase } from '../store';
+import { PageHeader } from '../components/PageHeader';
+import { IconLogout } from '../components/Icons';
+import { getTheme, setThemePref, type ThemePref } from '../lib/theme';
 import { usePlan, usePlanData } from '../state';
 import Setup from './Setup';
 
@@ -16,6 +19,11 @@ export default function SettingsPage() {
   const [schedule, setSchedule] = useState<WeeklySlot[]>(plan.schedule);
   const [msg, setMsg] = useState<string | null>(null);
   const [newPlan, setNewPlan] = useState(false);
+  const [theme, setThemeState] = useState<ThemePref>(getTheme());
+  const setTheme = (t: ThemePref) => {
+    setThemePref(t);
+    setThemeState(t);
+  };
 
   if (newPlan) return <Setup onCancel={() => setNewPlan(false)} />;
 
@@ -34,104 +42,89 @@ export default function SettingsPage() {
 
   return (
     <div className="stack">
-      <div>
-        <h1>Configuração</h1>
-        <p className="muted" style={{ margin: 0 }}>
-          {store.mode === 'local'
+      <PageHeader
+        overline="Configuração"
+        title="Ajustes do plano"
+        lead={
+          store.mode === 'local'
             ? 'Modo local: os dados ficam só neste browser. Configure o Supabase para os ter em todas as máquinas.'
-            : 'Os dados estão guardados no Supabase e sincronizados entre máquinas.'}
-        </p>
-      </div>
+            : 'Os dados estão guardados no Supabase e sincronizados entre as suas máquinas.'
+        }
+      />
 
-      <div className="card stack">
-        <h2>Plano em curso</h2>
-        <div>
-          <b>{t.name}</b>
-          <div className="small muted">
+      <section className="card stack">
+        <div className="stack-sm" style={{ gap: 4 }}>
+          <span className="overline">Plano em curso</span>
+          <h2>{t.name}</h2>
+          <span className="muted small">
             {t.institution} · {t.role} · {t.weeks.length} semanas
-          </div>
+          </span>
         </div>
-        <label className="field" style={{ maxWidth: 220 }}>
+        <label className="field" style={{ maxWidth: 240 }}>
           Data do dia 1
           <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
         </label>
         <span className="small muted">
-          Termina a {formatDate(planEndDate(t, startDate))}. Ao mudar a data, as semanas e as avaliações são
-          recalculadas; os registos mantêm-se.
+          Termina a {formatDate(planEndDate(t, startDate))}. Ao mudar a data, as semanas e as avaliações são recalculadas; os
+          registos mantêm-se.
         </span>
-      </div>
+      </section>
 
-      <div className="card stack">
-        <h2>Agenda semanal dos blocos</h2>
-        <p className="small muted" style={{ margin: 0 }}>
-          Usada no calendário de lembretes. Pode dividir um bloco em vários momentos acrescentando linhas.
-        </p>
-        <div className="table-wrap">
-          <table className="score-grid">
-            <thead>
-              <tr>
-                <th>Bloco</th>
-                <th>Dia</th>
-                <th>Hora</th>
-                <th>Duração (min)</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {schedule.map((s, i) => (
-                <tr key={i}>
-                  <td style={{ minWidth: 170 }}>
-                    <select value={s.blockKey} onChange={(e) => setSlot(i, { blockKey: e.target.value })}>
-                      {t.blockTypes.map((b) => (
-                        <option key={b.key} value={b.key}>
-                          {b.name}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td style={{ minWidth: 120 }}>
-                    <select value={s.weekday} onChange={(e) => setSlot(i, { weekday: Number(e.target.value) })}>
-                      {[1, 2, 3, 4, 5, 6, 7].map((d) => (
-                        <option key={d} value={d}>
-                          {WEEKDAY_NAMES[d]}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td style={{ minWidth: 110 }}>
-                    <input type="time" value={s.time} onChange={(e) => setSlot(i, { time: e.target.value })} />
-                  </td>
-                  <td style={{ minWidth: 90 }}>
-                    <input
-                      type="number"
-                      min={15}
-                      step={15}
-                      value={s.durationMinutes}
-                      onChange={(e) => setSlot(i, { durationMinutes: Math.max(15, Number(e.target.value) || 15) })}
-                    />
-                  </td>
-                  <td>
-                    <button
-                      className="btn small"
-                      aria-label={`Remover ${blockName(s.blockKey)} de ${WEEKDAY_NAMES[s.weekday]}`}
-                      onClick={() => setSchedule(schedule.filter((_, j) => j !== i))}
-                    >
-                      Remover
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <section className="card stack">
+        <div className="stack-sm" style={{ gap: 4 }}>
+          <h2>Agenda semanal dos blocos</h2>
+          <span className="small muted">
+            Usada no calendário de lembretes. Pode dividir um bloco em vários momentos acrescentando linhas.
+          </span>
+        </div>
+        <div className="slot-list">
+          <div className="slot-labels" aria-hidden>
+            <span>Bloco</span>
+            <span>Dia</span>
+            <span>Hora</span>
+            <span>Minutos</span>
+            <span />
+          </div>
+          {schedule.map((s, i) => (
+            <div className="slot" key={i}>
+              <select aria-label="Bloco" value={s.blockKey} onChange={(e) => setSlot(i, { blockKey: e.target.value })}>
+                {t.blockTypes.map((b) => (
+                  <option key={b.key} value={b.key}>
+                    {b.name}
+                  </option>
+                ))}
+              </select>
+              <select aria-label="Dia" value={s.weekday} onChange={(e) => setSlot(i, { weekday: Number(e.target.value) })}>
+                {[1, 2, 3, 4, 5, 6, 7].map((d) => (
+                  <option key={d} value={d}>
+                    {WEEKDAY_NAMES[d]}
+                  </option>
+                ))}
+              </select>
+              <input aria-label="Hora" type="time" value={s.time} onChange={(e) => setSlot(i, { time: e.target.value })} />
+              <input
+                aria-label="Duração em minutos"
+                type="number"
+                min={15}
+                step={15}
+                value={s.durationMinutes}
+                onChange={(e) => setSlot(i, { durationMinutes: Math.max(15, Number(e.target.value) || 15) })}
+              />
+              <button
+                className="btn small"
+                aria-label={`Remover ${blockName(s.blockKey)} de ${WEEKDAY_NAMES[s.weekday]}`}
+                onClick={() => setSchedule(schedule.filter((_, j) => j !== i))}
+              >
+                Remover
+              </button>
+            </div>
+          ))}
         </div>
         <div>
           <button
             className="btn small"
             onClick={() =>
-              setSchedule([
-                ...schedule,
-                { blockKey: t.blockTypes[0].key, weekday: 1, time: '08:00', durationMinutes: 60 },
-              ])
+              setSchedule([...schedule, { blockKey: t.blockTypes[0].key, weekday: 1, time: '08:00', durationMinutes: 60 }])
             }
           >
             Acrescentar momento
@@ -141,11 +134,11 @@ export default function SettingsPage() {
           const mins = schedule.filter((s) => s.blockKey === b.key).reduce((a, s) => a + s.durationMinutes, 0);
           return mins !== b.plannedHours * 60 ? (
             <div key={b.key} className="small muted">
-              {b.name}: agendadas {mins / 60} h de {b.plannedHours} h previstas.
+              {b.name}: agendadas {(mins / 60).toLocaleString('pt-PT')} h de {b.plannedHours} h previstas.
             </div>
           ) : null;
         })}
-      </div>
+      </section>
 
       <div className="row">
         <button className="btn primary" disabled={!dirty} onClick={save}>
@@ -154,7 +147,7 @@ export default function SettingsPage() {
         {msg && <span className="small muted">{msg}</span>}
       </div>
 
-      <div className="card stack">
+      <section className="card stack">
         <h2>Lembretes e cópias</h2>
         <p className="small muted" style={{ margin: 0 }}>
           O calendário (.ics) tem os blocos de cada semana com lembrete 15 minutos antes, o prazo de cada entregável e as
@@ -182,7 +175,25 @@ export default function SettingsPage() {
             Exportar modelo do plano
           </button>
         </div>
-      </div>
+      </section>
+
+      <section className="card stack">
+        <h2>Aparência</h2>
+        <div className="seg" role="group" aria-label="Tema">
+          {(
+            [
+              ['auto', 'Automático'],
+              ['light', 'Areia'],
+              ['dark', 'Petróleo'],
+            ] as const
+          ).map(([k, label]) => (
+            <button key={k} className={theme === k ? 'on' : ''} aria-pressed={theme === k} onClick={() => setTheme(k)}>
+              {label}
+            </button>
+          ))}
+        </div>
+        <span className="small muted">Automático segue o modo claro ou escuro do computador ou do telemóvel.</span>
+      </section>
 
       <div className="card stack">
         <h2>Outro plano</h2>
@@ -195,6 +206,14 @@ export default function SettingsPage() {
           </button>
         </div>
       </div>
+
+      {supabase && (
+        <div>
+          <button className="btn" onClick={() => supabase!.auth.signOut()}>
+            <IconLogout /> Terminar sessão
+          </button>
+        </div>
+      )}
     </div>
   );
 }

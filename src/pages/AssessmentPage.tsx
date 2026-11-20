@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { CompetencyChart } from '../components/Charts';
+import { PageHeader } from '../components/PageHeader';
 import { formatDate, momentDate, todayISO, diffDays } from '../lib/schedule';
 import { newId, nowISO } from '../store/store';
 import { usePlan, usePlanData } from '../state';
@@ -50,17 +51,17 @@ export default function AssessmentPage() {
 
   return (
     <div className="stack">
-      <div>
-        <h1>Autoavaliação de competências</h1>
-        <p className="muted" style={{ margin: 0 }}>
-          A pontuação é uma ferramenta de reflexão, não uma avaliação formal de desempenho. Momentos previstos:{' '}
-          {t.assessmentMoments.map((m) => `${m.label} (${formatDate(momentDate(plan.startDate, m.day))})`).join(', ')}.
-        </p>
-      </div>
+      <PageHeader
+        overline="Autoavaliação"
+        title="Competências"
+        lead={`A pontuação é uma ferramenta de reflexão, não uma avaliação formal de desempenho. Momentos previstos: ${t.assessmentMoments
+          .map((m) => `${m.label} (${formatDate(momentDate(plan.startDate, m.day))})`)
+          .join(', ')}.`}
+      />
 
-      <div className="card stack">
-        <div className="row">
-          <label className="field" style={{ width: 200 }}>
+      <section className="card stack">
+        <div className="grid grid-2" style={{ maxWidth: 440 }}>
+          <label className="field">
             Momento
             <select value={momentKey} onChange={(e) => setMomentKey(e.target.value)}>
               {t.assessmentMoments.map((m) => (
@@ -71,42 +72,41 @@ export default function AssessmentPage() {
               ))}
             </select>
           </label>
-          <label className="field" style={{ width: 180 }}>
+          <label className="field">
             Data
             <input type="date" value={assessedOn} onChange={(e) => setAssessedOn(e.target.value)} />
           </label>
         </div>
-        <div className="small muted">
-          Escala: {t.scale.map((s) => `${s.value} = ${s.label}`).join('; ')}.
+        <div className="score-scale">
+          {t.scale.map((s) => (
+            <span key={s.value}>
+              <b>{s.value}</b> {s.label}
+            </span>
+          ))}
         </div>
-        <div className="table-wrap">
-          <table className="score-grid">
-            <tbody>
-              {t.competencies.map((c) => (
-                <tr key={c.key}>
-                  <td>
-                    <b>{c.name}</b>
-                    <div className="small muted">{c.description}</div>
-                  </td>
-                  <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                    <div className="score-buttons" role="group" aria-label={c.name}>
-                      {t.scale.map((s) => (
-                        <button
-                          key={s.value}
-                          title={s.label}
-                          className={scores[c.key] === s.value ? 'on' : ''}
-                          aria-pressed={scores[c.key] === s.value}
-                          onClick={() => setScores({ ...scores, [c.key]: s.value })}
-                        >
-                          {s.value}
-                        </button>
-                      ))}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="score-list">
+          {t.competencies.map((c) => (
+            <div key={c.key} className="score-row">
+              <div>
+                <b>{c.name}</b>
+                <div className="small muted">{c.description}</div>
+              </div>
+              <div className="score-buttons" role="group" aria-label={c.name}>
+                {t.scale.map((s) => (
+                  <button
+                    key={s.value}
+                    title={s.label}
+                    className={scores[c.key] === s.value ? 'on' : ''}
+                    aria-pressed={scores[c.key] === s.value}
+                    aria-label={`${c.name}: ${s.value}, ${s.label}`}
+                    onClick={() => setScores({ ...scores, [c.key]: s.value })}
+                  >
+                    {s.value}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
         <label className="field">
           Notas (opcional)
@@ -117,12 +117,12 @@ export default function AssessmentPage() {
             Guardar autoavaliação
           </button>
           {!complete && <span className="small muted">Pontue todas as competências para guardar.</span>}
-          {saved && <span className="small" style={{ color: 'var(--good)' }}>Guardada.</span>}
+          {saved && <span className="ok">Guardada.</span>}
         </div>
-      </div>
+      </section>
 
       {sorted.length > 0 && (
-        <div className="card stack">
+        <section className="card stack">
           <h2>Evolução</h2>
           <CompetencyChart
             competencies={t.competencies}
@@ -134,12 +134,12 @@ export default function AssessmentPage() {
             scaleMax={scaleMax}
           />
           <h3 style={{ marginTop: 8 }}>Histórico</h3>
-          <div className="stack" style={{ gap: 8 }}>
+          <div>
             {sorted.map((a) => {
               const vals = Object.values(a.scores);
               const avg = vals.reduce((s, v) => s + v, 0) / (vals.length || 1);
               return (
-                <div key={a.id} className="row" style={{ justifyContent: 'space-between' }}>
+                <div key={a.id} className="history-row">
                   <span>
                     <b>{momentLabel(a.momentKey)}</b> · {formatDate(a.assessedOn)} · média{' '}
                     {avg.toLocaleString('pt-PT', { maximumFractionDigits: 1 })}
@@ -163,7 +163,7 @@ export default function AssessmentPage() {
               );
             })}
           </div>
-        </div>
+        </section>
       )}
     </div>
   );

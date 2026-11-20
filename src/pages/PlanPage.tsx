@@ -1,6 +1,7 @@
+import { PageHeader } from '../components/PageHeader';
 import { WeekStatePill } from '../components/StatusPill';
 import { weekHours, weekState } from '../lib/progress';
-import { formatShort, todayISO, weekEndDate, weekStartDate, formatDate, planEndDate } from '../lib/schedule';
+import { formatDate, formatShort, planEndDate, todayISO, weekEndDate, weekStartDate } from '../lib/schedule';
 import { usePlanData } from '../state';
 
 export default function PlanPage() {
@@ -11,28 +12,27 @@ export default function PlanPage() {
 
   return (
     <div className="stack">
-      <div>
-        <h1>{t.name}</h1>
-        <p className="muted" style={{ margin: 0 }}>
-          {t.institution} · {t.role} · {formatDate(plan.startDate)} a {formatDate(planEndDate(t, plan.startDate))}
-        </p>
-      </div>
-      {t.description && <p style={{ margin: 0 }}>{t.description}</p>}
+      <PageHeader
+        overline={`${t.institution} · ${t.role}`}
+        title={t.name}
+        lead={`${formatDate(plan.startDate)} a ${formatDate(planEndDate(t, plan.startDate))} · ${t.weeks.length} semanas · ${t.weeklyHours} h por semana`}
+      />
+      {t.description && <p style={{ margin: 0, maxWidth: 760 }}>{t.description}</p>}
       {t.goldenRule && (
-        <div className="resource">
-          <b>Regra de ouro.</b> {t.goldenRule}
+        <div className="card card-brand">
+          <span className="overline">Regra de ouro</span>
+          <p style={{ margin: '8px 0 0', fontSize: 18, lineHeight: '28px' }}>{t.goldenRule}</p>
         </div>
       )}
 
       {t.phases.map((p) => (
-        <section key={p.number} className="stack" style={{ gap: 10 }}>
-          <div>
-            <h2 style={{ marginBottom: 2 }}>
-              Fase {p.number}: {p.name}
-            </h2>
-            <p className="muted small" style={{ margin: 0 }}>
-              Semanas {p.weekRange[0]} a {p.weekRange[1]}. {p.objective}
-            </p>
+        <section key={p.number}>
+          <div className="phase-head">
+            <span className="overline">
+              Fase {p.number} · semanas {p.weekRange[0]} a {p.weekRange[1]}
+            </span>
+            <h2>{p.name}</h2>
+            <span className="muted">{p.objective}</span>
           </div>
           <div className="week-list">
             {t.weeks
@@ -42,11 +42,11 @@ export default function PlanPage() {
                   <span className="week-num">{w.number}</span>
                   <span className="grow">
                     <span className="title">{w.title}</span>
-                    <span className="small muted" style={{ display: 'block' }}>
-                      {formatShort(weekStartDate(plan.startDate, w.number))} a{' '}
-                      {formatShort(weekEndDate(plan.startDate, w.number))} ·{' '}
-                      {weekHours(blockLogs, w.number).toLocaleString('pt-PT')} de {t.weeklyHours} h · {w.deliverable}
+                    <span className="meta">
+                      {formatShort(weekStartDate(plan.startDate, w.number))} a {formatShort(weekEndDate(plan.startDate, w.number))} ·{' '}
+                      {weekHours(blockLogs, w.number).toLocaleString('pt-PT')} de {t.weeklyHours} h
                     </span>
+                    <span className="meta">{w.deliverable}</span>
                   </span>
                   <WeekStatePill state={weekState(data, w.number, today)} />
                 </a>
@@ -55,7 +55,7 @@ export default function PlanPage() {
         </section>
       ))}
 
-      {t.closingNote && <p className="muted">{t.closingNote}</p>}
+      {t.closingNote && <p className="muted" style={{ maxWidth: 760 }}>{t.closingNote}</p>}
     </div>
   );
 }

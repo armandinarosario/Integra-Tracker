@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { WeekStatePill } from '../components/StatusPill';
+import { PageHeader } from '../components/PageHeader';
+import { IconArrowLeft, IconArrowRight, IconExternal } from '../components/Icons';
 import { findDeliverable, findLog, weekHours, weekState } from '../lib/progress';
 import { go } from '../lib/router';
 import { currentWeek, formatShort, todayISO, weekEndDate, weekStartDate } from '../lib/schedule';
@@ -51,7 +53,7 @@ function parseHours(s: string): number {
 
 function StatusSeg({ value, onChange }: { value: Status; onChange: (s: Status) => void }) {
   return (
-    <div className="seg" role="group" aria-label="Estado">
+    <div className="seg fill" role="group" aria-label="Estado">
       {STATUSES.map((s) => (
         <button key={s} className={value === s ? 'on' : ''} onClick={() => onChange(s)} aria-pressed={value === s}>
           {STATUS_LABEL[s]}
@@ -84,14 +86,14 @@ function BlockEditor({ planId, week, block }: { planId: string; week: number; bl
   return (
     <div className="block-card">
       <div className="block-head">
-        <div>
-          <h3 style={{ margin: 0 }}>{block.name}</h3>
-          <span className="small muted">
-            {block.description} Previsto: {block.plannedHours} h.
-          </span>
+        <div className="stack-sm" style={{ gap: 4 }}>
+          <span className="overline">{block.plannedHours} h previstas</span>
+          <h3>{block.name}</h3>
+          <span className="small muted">{block.description}</span>
         </div>
+        {pending && <span className="saving">A guardar…</span>}
       </div>
-      <div className="row">
+      <div className="block-controls">
         <StatusSeg
           value={status}
           onChange={(s) => {
@@ -99,22 +101,20 @@ function BlockEditor({ planId, week, block }: { planId: string; week: number; bl
             if (s === 'done' && !hours) setHours(String(block.plannedHours));
           }}
         />
-        <label className="field" style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <label className="inline-field">
           Horas feitas
           <input
             inputMode="decimal"
-            style={{ width: 80 }}
             value={hours}
             placeholder="0"
             onChange={(e) => setHours(e.target.value)}
             aria-label={`Horas feitas em ${block.name}`}
           />
         </label>
-        {pending && <span className="saving">A guardar…</span>}
       </div>
       {block.capturePrinciples && (
-        <div className="stack" style={{ gap: 6 }}>
-          <span className="small muted" style={{ fontWeight: 500 }}>
+        <div className="stack-sm" style={{ gap: 8 }}>
+          <span className="small muted" style={{ fontWeight: 600 }}>
             Três princípios úteis
           </span>
           {principles.map((p, i) => (
@@ -122,6 +122,7 @@ function BlockEditor({ planId, week, block }: { planId: string; week: number; bl
               key={i}
               value={p}
               placeholder={`Princípio ${i + 1}`}
+              aria-label={`Princípio ${i + 1}`}
               onChange={(e) => setPrinciples(principles.map((x, j) => (j === i ? e.target.value : x)))}
             />
           ))}
@@ -156,12 +157,15 @@ function DeliverableEditor({ planId, week, description }: { planId: string; week
   const isUrl = /^https?:\/\//i.test(link.trim());
 
   return (
-    <div className="block-card" style={{ borderColor: 'var(--accent)' }}>
-      <div>
-        <h3 style={{ margin: 0 }}>Entregável</h3>
-        <span className="small muted">{description}</span>
+    <div className="block-card deliverable">
+      <div className="block-head">
+        <div className="stack-sm" style={{ gap: 4 }}>
+          <span className="overline">Entregável da semana</span>
+          <h3>{description}</h3>
+        </div>
+        {pending && <span className="saving">A guardar…</span>}
       </div>
-      <div className="row">
+      <div className="block-controls">
         <StatusSeg
           value={status}
           onChange={(s) => {
@@ -169,11 +173,10 @@ function DeliverableEditor({ planId, week, description }: { planId: string; week
             if (s === 'done' && !deliveredOn) setDeliveredOn(todayISO());
           }}
         />
-        <label className="field" style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <label className="inline-field">
           Entregue em
-          <input type="date" style={{ width: 160 }} value={deliveredOn} onChange={(e) => setDeliveredOn(e.target.value)} />
+          <input type="date" value={deliveredOn} onChange={(e) => setDeliveredOn(e.target.value)} />
         </label>
-        {pending && <span className="saving">A guardar…</span>}
       </div>
       <label className="field">
         Ligação para o ficheiro (OneDrive, SharePoint ou caminho na pasta)
@@ -182,8 +185,8 @@ function DeliverableEditor({ planId, week, description }: { planId: string; week
       {link && (
         <span className="small">
           {isUrl ? (
-            <a href={link.trim()} target="_blank" rel="noreferrer">
-              Abrir o entregável
+            <a href={link.trim()} target="_blank" rel="noreferrer" className="row" style={{ display: 'inline-flex', gap: 6 }}>
+              Abrir o entregável <IconExternal />
             </a>
           ) : (
             <span className="muted">Caminho local: abra-o a partir do explorador de ficheiros.</span>
@@ -212,49 +215,55 @@ export default function WeekPage({ week }: { week?: number }) {
   return (
     <div className="stack">
       <div className="row" style={{ justifyContent: 'space-between' }}>
-        <div className="row" style={{ gap: 8 }}>
-          <button className="btn small" disabled={n <= 1} onClick={() => go(`/semana/${n - 1}`)} aria-label="Semana anterior">
-            ←
+        <div className="week-nav">
+          <button className="btn icon" disabled={n <= 1} onClick={() => go(`/semana/${n - 1}`)} aria-label="Semana anterior">
+            <IconArrowLeft />
           </button>
-          <select value={n} onChange={(e) => go(`/semana/${e.target.value}`)} style={{ width: 'auto' }} aria-label="Escolher semana">
+          <select value={n} onChange={(e) => go(`/semana/${e.target.value}`)} aria-label="Escolher semana">
             {t.weeks.map((x) => (
               <option key={x.number} value={x.number}>
                 Semana {x.number}
               </option>
             ))}
           </select>
-          <button className="btn small" disabled={n >= total} onClick={() => go(`/semana/${n + 1}`)} aria-label="Semana seguinte">
-            →
+          <button className="btn icon" disabled={n >= total} onClick={() => go(`/semana/${n + 1}`)} aria-label="Semana seguinte">
+            <IconArrowRight />
           </button>
         </div>
         <WeekStatePill state={weekState(data, n, today)} />
       </div>
 
-      <div>
-        <span className="small muted">
-          {phase ? `Fase ${phase.number}: ${phase.name} · ` : ''}
-          {formatShort(weekStartDate(plan.startDate, n))} a {formatShort(weekEndDate(plan.startDate, n))} ·{' '}
-          {weekHours(blockLogs, n).toLocaleString('pt-PT')} de {t.weeklyHours} h
-        </span>
-        <h1 style={{ marginTop: 4 }}>
-          Semana {n}: {w.title}
-        </h1>
-        <p style={{ margin: 0 }}>{w.objective}</p>
-      </div>
+      <PageHeader
+        overline={`${phase ? `Fase ${phase.number} · ` : ''}Semana ${n} · ${formatShort(weekStartDate(plan.startDate, n))} a ${formatShort(
+          weekEndDate(plan.startDate, n),
+        )}`}
+        title={w.title}
+        lead={
+          <>
+            {w.objective}{' '}
+            <span className="small" style={{ whiteSpace: 'nowrap' }}>
+              ({weekHours(blockLogs, n).toLocaleString('pt-PT')} de {t.weeklyHours} h)
+            </span>
+          </>
+        }
+      />
 
-      <div className="grid grid-2">
-        <div className="card">
-          <h2>Exercício prático</h2>
-          <ul style={{ margin: 0, paddingLeft: 20 }}>
+      <div className="grid grid-2" style={{ alignItems: 'start' }}>
+        <section className="card">
+          <span className="overline">Exercício prático</span>
+          <div style={{ height: 16 }} />
+          <ol className="exercise-list">
             {w.exercises.map((e) => (
-              <li key={e}>{e}</li>
+              <li key={e}>
+                <span>{e}</span>
+              </li>
             ))}
-          </ul>
-        </div>
+          </ol>
+        </section>
         {w.resource && (
-          <div className="resource">
-            <div className="small muted">Recurso da semana</div>
-            <h2 style={{ marginBottom: 2 }}>
+          <section className="resource">
+            <span className="overline">Recurso da semana</span>
+            <h2>
               {w.resource.url ? (
                 <a href={w.resource.url} target="_blank" rel="noreferrer">
                   {w.resource.title}
@@ -263,21 +272,22 @@ export default function WeekPage({ week }: { week?: number }) {
                 w.resource.title
               )}
             </h2>
-            {w.resource.author && <div className="small muted" style={{ marginBottom: 8 }}>{w.resource.author}</div>}
-            <p className="small">{w.resource.summary}</p>
+            {w.resource.author && <div className="small muted">{w.resource.author}</div>}
+            <div className="rule" aria-hidden />
+            <p className="small" style={{ lineHeight: '21px' }}>{w.resource.summary}</p>
             {w.resource.keyPoints && (
-              <ul className="small">
+              <ul className="small" style={{ lineHeight: '21px' }}>
                 {w.resource.keyPoints.map((k) => (
                   <li key={k}>{k}</li>
                 ))}
               </ul>
             )}
-          </div>
+          </section>
         )}
       </div>
 
       {/* key = semana: ao mudar de semana, os formulários recomeçam com os dados certos */}
-      <div className="stack" key={n}>
+      <div className="stack" key={n} style={{ gap: 16 }}>
         <DeliverableEditor planId={plan.id} week={n} description={w.deliverable} />
         {t.blockTypes.map((b) => (
           <BlockEditor key={b.key} planId={plan.id} week={n} block={b} />

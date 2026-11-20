@@ -5,6 +5,7 @@ import type { PlanTemplate } from '../lib/types';
 import { store } from '../store';
 import { usePlan } from '../state';
 import { go } from '../lib/router';
+import { PageHeader } from '../components/PageHeader';
 
 /**
  * Início de um plano: escolher o modelo e a data do dia 1.
@@ -66,14 +67,14 @@ export default function Setup({ onCancel }: { onCancel?: () => void }) {
   }
 
   return (
-    <div className="main" style={{ margin: '0 auto', maxWidth: 720 }}>
+    <div style={{ margin: '0 auto', maxWidth: 760, padding: onCancel ? 0 : '48px 16px' }}>
       <div className="stack">
         <div>
-          <h1>{onCancel ? 'Iniciar outro plano' : 'Começar um plano'}</h1>
-          <p className="muted">
-            Escolha o modelo do plano e a data do dia 1. As datas de cada semana e das autoavaliações são calculadas a
-            partir dessa data.
-          </p>
+          <PageHeader
+            overline="Integra-Tracker"
+            title={onCancel ? 'Iniciar outro plano' : 'Começar um plano'}
+            lead="Escolha o modelo do plano e a data do dia 1. As datas de cada semana e das autoavaliações são calculadas a partir dessa data."
+          />
           {onCancel && (
             <div className="notice">O plano atual fica arquivado, com todos os registos. Não é apagado.</div>
           )}
@@ -101,7 +102,7 @@ export default function Setup({ onCancel }: { onCancel?: () => void }) {
           )}
           {errors.length > 0 && (
             <div className="notice error">
-              <b>O ficheiro tem problemas:</b>
+              <b>O ficheiro tem problemas</b>
               <ul style={{ margin: '4px 0 0', paddingLeft: 18 }}>
                 {errors.map((e) => (
                   <li key={e}>{e}</li>
@@ -111,11 +112,12 @@ export default function Setup({ onCancel }: { onCancel?: () => void }) {
           )}
           {template && (
             <div className="resource">
-              <b>{template.name}</b>
+              <span className="overline">Modelo escolhido</span>
+              <h2>{template.name}</h2>
               <div className="small muted">
                 {template.institution} · {template.role}
               </div>
-              <div className="small" style={{ marginTop: 6 }}>
+              <div className="small" style={{ marginTop: 8 }}>
                 {template.weeks.length} semanas, {template.phases.length} fases, {template.weeklyHours} h por semana,{' '}
                 {template.competencies.length} competências, {template.assessmentMoments.length} momentos de avaliação.
               </div>

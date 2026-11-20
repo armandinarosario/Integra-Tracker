@@ -53,9 +53,12 @@ export function HoursChart({ data }: { data: WeekHours[] }) {
 
   return (
     <div className="chart" ref={ref} onMouseLeave={() => setTip(null)}>
-      <div className="legend">
+      <div className="legend" style={{ marginBottom: 12 }}>
         <span>
-          <i style={{ background: 'var(--series-1)' }} /> Horas feitas
+          <i className="sq" style={{ background: 'var(--bar)' }} /> Horas feitas
+        </span>
+        <span>
+          <i className="sq" style={{ background: 'var(--bar-current)' }} /> Semana atual
         </span>
         <span>
           <i className="line" /> Previsto ({fmtH(planned)} h)
@@ -83,12 +86,12 @@ export function HoursChart({ data }: { data: WeekHours[] }) {
               : '';
           return (
             <g key={d.week}>
-              {path && <path d={path} fill="var(--series-1)" opacity={d.isCurrent ? 0.55 : 1} />}
+              {path && <path d={path} fill={d.isCurrent ? 'var(--bar-current)' : 'var(--bar)'} />}
               {(band >= 30 || d.week % 2 === 1 || d.isCurrent) && <text
                 x={cx}
                 y={H - 8}
                 textAnchor="middle"
-                style={d.isCurrent ? { fill: 'var(--text)', fontWeight: 700 } : undefined}
+                style={d.isCurrent ? { fill: 'var(--heading)', fontWeight: 700 } : undefined}
               >
                 S{d.week}
               </text>}
@@ -119,12 +122,12 @@ export function HoursChart({ data }: { data: WeekHours[] }) {
           x2={W - m.r}
           y1={y(planned)}
           y2={y(planned)}
-          stroke="var(--text-3)"
+          stroke="var(--ink-muted)"
           strokeWidth={2}
           strokeDasharray="5 4"
           pointerEvents="none"
         />
-        <line x1={m.l} x2={W - m.r} y1={y(0)} y2={y(0)} stroke="var(--text-3)" strokeWidth={1} />
+        <line x1={m.l} x2={W - m.r} y1={y(0)} y2={y(0)} stroke="var(--ink-muted)" strokeWidth={1} />
       </svg>
       {tip && (
         <div className="tooltip" style={{ left: `${tip.x}%`, top: `calc(${tip.y}% + 22px)` }}>
@@ -190,7 +193,7 @@ export function CompetencyChart({
       </div>
       {asTable ? (
         <div className="table-wrap">
-          <table className="score-grid">
+          <table className="data-table">
             <thead>
               <tr>
                 <th>Competência</th>
@@ -234,7 +237,7 @@ export function CompetencyChart({
                   x={narrow ? 0 : m.l - 12}
                   y={narrow ? cy - 14 : cy + 4}
                   textAnchor={narrow ? 'start' : 'end'}
-                  style={{ fill: 'var(--text)', fontSize: 12 }}
+                  style={{ fill: 'var(--ink)', fontSize: 13 }}
                 >
                   {c.name}
                 </text>
@@ -244,7 +247,7 @@ export function CompetencyChart({
                     x2={x(Math.max(...vals))}
                     y1={cy}
                     y2={cy}
-                    stroke="var(--text-3)"
+                    stroke="var(--ink-muted)"
                     strokeWidth={2}
                   />
                 )}
@@ -262,7 +265,7 @@ export function CompetencyChart({
                       cy={cy + dy}
                       r={6}
                       fill={SERIES[si]}
-                      stroke="var(--surface)"
+                      stroke="var(--surface-raised)"
                       strokeWidth={2}
                       onMouseMove={() =>
                         setTip({

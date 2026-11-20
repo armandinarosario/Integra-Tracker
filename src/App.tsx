@@ -10,6 +10,8 @@ import PlanPage from './pages/PlanPage';
 import WeekPage from './pages/WeekPage';
 import AssessmentPage from './pages/AssessmentPage';
 import SettingsPage from './pages/SettingsPage';
+import { IconAssess, IconHome, IconLogout, IconPlan, IconSettings, IconWeek } from './components/Icons';
+import { BRAND_ICON, BRAND_MONOGRAM_LIGHT } from './components/PageHeader';
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
@@ -25,7 +27,7 @@ export default function App() {
     return () => data.subscription.unsubscribe();
   }, []);
 
-  if (!ready) return <div className="login muted">A carregar…</div>;
+  if (!ready) return <div className="loading">A carregar…</div>;
   if (supabase && !session) return <Login />;
   return (
     <PlanProvider key={session?.user.id ?? 'local'}>
@@ -35,18 +37,18 @@ export default function App() {
 }
 
 const NAV = [
-  { path: '/', label: 'Início' },
-  { path: '/plano', label: 'Plano' },
-  { path: '/semana', label: 'Registo semanal' },
-  { path: '/avaliacao', label: 'Autoavaliação' },
-  { path: '/config', label: 'Configuração' },
+  { path: '/', label: 'Início', short: 'Início', Icon: IconHome },
+  { path: '/plano', label: 'Plano', short: 'Plano', Icon: IconPlan },
+  { path: '/semana', label: 'Registo semanal', short: 'Semana', Icon: IconWeek },
+  { path: '/avaliacao', label: 'Autoavaliação', short: 'Avaliação', Icon: IconAssess },
+  { path: '/config', label: 'Configuração', short: 'Ajustes', Icon: IconSettings },
 ];
 
 function Shell({ email }: { email: string | null }) {
   const route = useHashRoute();
   const { data, loading, error } = usePlan();
 
-  if (loading && !data) return <div className="login muted">A carregar o plano…</div>;
+  if (loading && !data) return <div className="loading">A carregar o plano…</div>;
   if (!data) return <Setup />;
 
   const section = '/' + (route.split('/')[1] ?? '');
@@ -62,33 +64,59 @@ function Shell({ email }: { email: string | null }) {
 
   return (
     <div className="shell">
-      <aside className="sidebar">
+      <aside className="sidebar" aria-label="Navegação">
         <div className="brand">
-          <span className="brand-mark" aria-hidden />
-          <span className="brand-text">Integra-Tracker</span>
+          <img src={BRAND_MONOGRAM_LIGHT} alt="" />
+          <div>
+            <div className="brand-name">Integra-Tracker</div>
+            <div className="brand-tag">Plano de integração</div>
+          </div>
         </div>
         <nav className="nav">
-          {NAV.map((n) => (
-            <a key={n.path} href={'#' + n.path} className={section === n.path ? 'active' : ''}>
-              {n.label}
+          {NAV.map(({ path, label, Icon }) => (
+            <a key={path} href={'#' + path} className={section === path ? 'active' : ''} aria-current={section === path ? 'page' : undefined}>
+              <Icon />
+              {label}
             </a>
           ))}
         </nav>
         <div className="sidebar-foot">
-          {store.mode === 'local' ? 'Modo local: dados só neste browser.' : email}
+          {store.mode === 'local' ? (
+            'Modo local: os dados ficam só neste browser.'
+          ) : (
+            <>
+              <div>Sessão iniciada</div>
+              <div className="who">{email}</div>
+            </>
+          )}
           {supabase && (
             <div>
-              <button className="btn small" style={{ marginTop: 8 }} onClick={() => supabase!.auth.signOut()}>
-                Sair
+              <button className="btn-ghost-brand" onClick={() => supabase!.auth.signOut()}>
+                <IconLogout /> Sair
               </button>
             </div>
           )}
         </div>
       </aside>
+
+      <header className="topbar">
+        <img src={BRAND_ICON} alt="" />
+        <span className="brand-name">Integra-Tracker</span>
+      </header>
+
       <main className="main">
-        {error && <div className="notice error" style={{ marginBottom: 16 }}>{error}</div>}
+        {error && <div className="notice error" style={{ marginBottom: 24 }}>{error}</div>}
         {page}
       </main>
+
+      <nav className="tabbar" aria-label="Navegação">
+        {NAV.map(({ path, short, Icon }) => (
+          <a key={path} href={'#' + path} className={section === path ? 'active' : ''} aria-current={section === path ? 'page' : undefined}>
+            <Icon />
+            {short}
+          </a>
+        ))}
+      </nav>
     </div>
   );
 }
