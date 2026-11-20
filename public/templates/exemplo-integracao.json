@@ -1,0 +1,165 @@
+{
+  "schemaVersion": 1,
+  "id": "exemplo-integracao-30-dias",
+  "name": "Exemplo: integração de 30 dias numa nova função",
+  "institution": "Organização de exemplo",
+  "role": "Nova função",
+  "description": "Plano de exemplo, para mostrar o formato. Substitua-o pelo seu próprio modelo na Configuração.",
+  "goldenRule": "Cada semana termina com um resultado que outra pessoa possa usar.",
+  "weeklyHours": 6,
+  "blockTypes": [
+    {
+      "key": "aprender",
+      "name": "Aprender",
+      "description": "Ler, ouvir ou observar e registar três ideias úteis.",
+      "plannedHours": 2,
+      "capturePrinciples": true
+    },
+    {
+      "key": "praticar",
+      "name": "Praticar",
+      "description": "Aplicar o que aprendeu numa tarefa real.",
+      "plannedHours": 3
+    },
+    {
+      "key": "rever",
+      "name": "Rever",
+      "description": "Pedir feedback e registar o que mudar.",
+      "plannedHours": 1
+    }
+  ],
+  "phases": [
+    {
+      "number": 1,
+      "name": "Conhecer",
+      "objective": "Perceber a organização, as pessoas e as expectativas.",
+      "weekRange": [
+        1,
+        2
+      ]
+    },
+    {
+      "number": 2,
+      "name": "Contribuir",
+      "objective": "Entregar os primeiros resultados visíveis.",
+      "weekRange": [
+        3,
+        4
+      ]
+    }
+  ],
+  "weeks": [
+    {
+      "number": 1,
+      "title": "Expectativas e contexto",
+      "objective": "Saber o que se espera da função e quem são os principais interlocutores.",
+      "exercises": [
+        "Conversar com a chefia sobre prioridades.",
+        "Listar os cinco interlocutores mais importantes."
+      ],
+      "deliverable": "Nota de uma página com prioridades e interlocutores.",
+      "resource": {
+        "title": "Guia de acolhimento da organização",
+        "summary": "Leia o guia de acolhimento e registe o que é diferente do que esperava."
+      }
+    },
+    {
+      "number": 2,
+      "title": "Processos e ferramentas",
+      "objective": "Dominar os processos e ferramentas do dia a dia.",
+      "exercises": [
+        "Mapear um processo de ponta a ponta.",
+        "Identificar um ponto de melhoria."
+      ],
+      "deliverable": "Mapa de um processo com uma proposta de melhoria.",
+      "resource": {
+        "title": "Manual de procedimentos",
+        "summary": "Escolha um procedimento e compare o que está escrito com o que se faz na prática."
+      }
+    },
+    {
+      "number": 3,
+      "title": "Primeiro resultado",
+      "objective": "Entregar uma primeira contribuição concreta.",
+      "exercises": [
+        "Escolher uma tarefa com impacto visível.",
+        "Executar e pedir feedback."
+      ],
+      "deliverable": "Primeira entrega concluída e validada.",
+      "resource": {
+        "title": "Exemplo de um bom trabalho anterior",
+        "summary": "Peça um exemplo de trabalho bem avaliado e identifique o que o torna bom."
+      }
+    },
+    {
+      "number": 4,
+      "title": "Balanço e próximos passos",
+      "objective": "Rever o percurso e definir objetivos para os meses seguintes.",
+      "exercises": [
+        "Comparar a autoavaliação inicial e a final.",
+        "Acordar três objetivos com a chefia."
+      ],
+      "deliverable": "Plano de objetivos para os próximos 90 dias.",
+      "resource": {
+        "title": "Notas das semanas anteriores",
+        "summary": "Releia as suas notas e escolha as três lições mais importantes."
+      }
+    }
+  ],
+  "competencies": [
+    {
+      "key": "contexto",
+      "name": "Conhecimento do contexto",
+      "description": "Conheço as prioridades, as pessoas e as regras da organização."
+    },
+    {
+      "key": "autonomia",
+      "name": "Autonomia",
+      "description": "Resolvo as tarefas correntes sem ajuda."
+    },
+    {
+      "key": "comunicacao",
+      "name": "Comunicação",
+      "description": "Comunico de forma clara com a equipa e a chefia."
+    },
+    {
+      "key": "resultados",
+      "name": "Resultados",
+      "description": "Entrego trabalho útil dentro do prazo."
+    }
+  ],
+  "scale": [
+    {
+      "value": 1,
+      "label": "A desenvolver"
+    },
+    {
+      "value": 2,
+      "label": "Básico"
+    },
+    {
+      "value": 3,
+      "label": "Competente"
+    },
+    {
+      "value": 4,
+      "label": "Avançado"
+    },
+    {
+      "value": 5,
+      "label": "Excelente"
+    }
+  ],
+  "assessmentMoments": [
+    {
+      "key": "inicio",
+      "label": "Início",
+      "day": 1
+    },
+    {
+      "key": "fim",
+      "label": "Dia 30",
+      "day": 30
+    }
+  ]
+}
