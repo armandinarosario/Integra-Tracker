@@ -29,15 +29,15 @@ Regra usada no progresso: uma semana só conta como concluída quando o entregá
 2. Em **SQL Editor**, cole e execute o conteúdo de [`supabase/schema.sql`](supabase/schema.sql). Cria as tabelas e as regras que garantem que cada utilizador só vê os seus dados.
 3. Em **Authentication > Users > Add user**, crie o seu utilizador com email e palavra-passe (marque *Auto Confirm User*).
 4. Em **Authentication > Sign In / Providers**, desligue **Allow new users to sign up**. Assim ninguém mais pode criar conta na sua app.
-5. Em **Project Settings > API**, copie o **Project URL** e a chave **anon public**.
+5. Em **Project Settings > Data API**, copie o **Project URL**. Em **Project Settings > API Keys**, copie a **Publishable key** (`sb_publishable_…`) ou, no separador *Legacy API keys*, a chave **anon**.
 
-A chave *anon* é pública por natureza (vai no código da página); a proteção dos dados é feita pelo login e pelas regras de segurança da base de dados. Nunca use a chave *service_role* na app.
+A chave publicável é pública por natureza (vai no código da página); a proteção dos dados é feita pelo login e pelas regras de segurança da base de dados. Nunca use a *Secret key* (`sb_secret_…`) nem a *service_role* na app.
 
 ### 2. GitHub Pages
 
 1. No repositório, vá a **Settings > Secrets and variables > Actions > Variables** e crie duas variáveis:
    - `VITE_SUPABASE_URL` com o Project URL;
-   - `VITE_SUPABASE_ANON_KEY` com a chave anon public.
+   - `VITE_SUPABASE_ANON_KEY` com a Publishable key (ou a chave anon).
 2. Em **Settings > Pages**, escolha **Source: GitHub Actions**.
 3. Cada `push` para `main` corre os testes e publica a app em `https://<utilizador>.github.io/<repositório>/`.
 
